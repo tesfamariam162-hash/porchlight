@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: porchlight-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: porchlight
+      POSTGRES_PASSWORD: porchlight_dev
+      POSTGRES_DB: porchlight
+    volumes:
+      - porchlight_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U porchlight -d porchlight"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  porchlight_pg_data:

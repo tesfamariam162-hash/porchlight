@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Apartment {
+  id                 String             @id @default(cuid())
+  name               String
+  number             String
+  description        String             @db.Text
+  type               String
+  location           String
+  floor              Int?
+  bedrooms           Int
+  bathrooms          Int
+  size               Float?
+  price              Decimal            @db.Decimal(12, 2)
+  availabilityStatus String
+  availableFrom      DateTime?
+  isArchived         Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  images             ApartmentImage[]
+  apartmentAmenities ApartmentAmenity[]
+  inquiries          Inquiry[]
+
+  @@unique([number])
+}
+
+model ApartmentImage {
+  id          String    @id @default(cuid())
+  url         String
+  alt         String?
+  sortOrder   Int       @default(0)
+  isPrimary   Boolean   @default(false)
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
+
+model Amenity {
+  id                 String             @id @default(cuid())
+  name               String             @unique
+  slug               String             @unique
+  icon               String?
+  description        String?
+  apartmentAmenities ApartmentAmenity[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model ApartmentAmenity {
+  apartmentId String
+  amenityId   String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  amenity     Amenity   @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([apartmentId, amenityId])
+}
+
+model Customer {
+  id        String    @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  notes     String?   @db.Text
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  inquiries Inquiry[]
+
+  @@index([email])
+}
+
+model Inquiry {
+  id            String     @id @default(cuid())
+  subject       String
+  message       String     @db.Text
+  status        String     @default("New")
+  internalNotes String?    @db.Text
+  apartmentId   String?
+  customerId    String
+  apartment     Apartment? @relation(fields: [apartmentId], references: [id], onDelete: SetNull)
+  customer      Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
